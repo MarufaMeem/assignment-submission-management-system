@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { fetchApi } from '@/lib/api';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react';
 
 interface UserDto {
     id: number;
@@ -17,6 +17,10 @@ export default function UsersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [createForm, setCreateForm] = useState({ fullName: '', email: '', password: '', role: 'Teacher', classId: '' });
+    const [creating, setCreating] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -46,19 +50,48 @@ export default function UsersPage() {
         }
     };
 
+    const handleCreateSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setCreating(true);
+        try {
+            const body = {
+                fullName: createForm.fullName,
+                email: createForm.email,
+                password: createForm.password,
+                role: createForm.role,
+                ...(createForm.role === 'Student' && createForm.classId ? { classId: parseInt(createForm.classId) } : {})
+            };
+
+            await fetchApi('/users', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            await loadUsers();
+            setIsCreateOpen(false);
+            setCreateForm({ fullName: '', email: '', password: '', role: 'Teacher', classId: '' });
+        } catch (err: any) {
+            alert("Failed to create user: " + err.message);
+        } finally {
+            setCreating(false);
+        }
+    };
+
     const filteredUsers = users.filter(u =>
         u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
                     <p className="mt-1 text-sm text-gray-500">Manage all users across the platform.</p>
                 </div>
-                <button className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition-colors shadow-sm">
+                <button
+                    onClick={() => setIsCreateOpen(true)}
+                    className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition-colors shadow-sm"
+                >
                     <Plus className="w-5 h-5" />
                     <span>Create User</span>
                 </button>
@@ -104,7 +137,7 @@ export default function UsersPage() {
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 flex-shrink-0">
                                                     <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-700 font-bold">
-                                                        {user.fullName.charAt(0)}
+                                                        {user.fullName.charAt(0).toUpperCase()}
                                                     </div>
                                                 </div>
                                                 <div className="ml-4">
@@ -115,8 +148,8 @@ export default function UsersPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800' :
-                                                    user.role === 'Teacher' ? 'bg-blue-100 text-blue-800' :
-                                                        'bg-green-100 text-green-800'
+                                                user.role === 'Teacher' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-green-100 text-green-800'
                                                 }`}>
                                                 {user.role}
                                             </span>
@@ -149,6 +182,55 @@ export default function UsersPage() {
                     </div>
                 )}
             </div>
+
+            {/* Create User Modal */}
+            {isCreateOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 className="text-xl font-bold text-gray-900">Create New User</h2>
+                            <button onClick={() => setIsCreateOpen(false)} className="text-gray-400 hover:text-gray-600 p-2 bg-white rounded-full shadow-sm hover:shadow transition-all">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCreateSubmit} className="p-6 overflow-y-auto space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
+                                <input required type="text" value={createForm.fullName} onChange={e => setCreateForm({ ...createForm, fullName: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="John Doe" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                                <input required type="email" value={createForm.email} onChange={e => setCreateForm({ ...createForm, email: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="john@school.edu" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+                                <input required type="password" minLength={6} value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">Role</label>
+                                <select value={createForm.role} onChange={e => setCreateForm({ ...createForm, role: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white">
+                                    <option value="Teacher">Teacher</option>
+                                    <option value="Student">Student</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                            {createForm.role === 'Student' && (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Class ID</label>
+                                    <input required type="number" min="1" value={createForm.classId} onChange={e => setCreateForm({ ...createForm, classId: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="e.g. 1" />
+                                </div>
+                            )}
+
+                            <div className="pt-4 border-t border-gray-100 flex justify-end">
+                                <button type="submit" disabled={creating} className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center">
+                                    {creating ? 'Creating...' : 'Create User'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

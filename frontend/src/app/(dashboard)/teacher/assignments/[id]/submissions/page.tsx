@@ -9,6 +9,8 @@ export default function SubmissionsPage() {
     const { id } = useParams();
     const [submissions, setSubmissions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [reviewingId, setReviewingId] = useState<number | null>(null);
+    const [reviewForm, setReviewForm] = useState({ marks: '', feedback: '' });
 
     useEffect(() => {
         const loadSubmissions = async () => {
@@ -24,14 +26,17 @@ export default function SubmissionsPage() {
         if (id) loadSubmissions();
     }, [id]);
 
-    const reviewSubmission = async (subId: number, marks: number, feedback: string) => {
+    const handleSubmitReview = async (subId: number) => {
         try {
+            const parsedMarks = Number(reviewForm.marks);
             await fetchApi(`/assignments/${id}/submissions/${subId}/review`, {
                 method: 'POST',
-                body: JSON.stringify({ marks, feedback })
+                body: JSON.stringify({ marks: parsedMarks, feedback: reviewForm.feedback })
             });
             // Update local state logically
-            setSubmissions(submissions.map(s => s.id === subId ? { ...s, status: "Reviewed", marks, feedback } : s));
+            setSubmissions(submissions.map(s => s.id === subId ? { ...s, status: "Reviewed", marks: parsedMarks, feedback: reviewForm.feedback } : s));
+            setReviewingId(null);
+            setReviewForm({ marks: '', feedback: '' });
         } catch (err: any) {
             alert(err.message);
         }
@@ -69,12 +74,31 @@ export default function SubmissionsPage() {
                                         <p className="text-sm text-emerald-700 mt-1">{s.feedback}</p>
                                     </div>
                                 </div>
+                            ) : reviewingId === s.id ? (
+                                <div className="mt-4 pt-4 border-t border-gray-100 bg-gray-50/50 -mx-6 px-6 pb-6">
+                                    <h4 className="font-semibold text-gray-900 mb-3">Grade this submission</h4>
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                            <div className="md:col-span-1">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Marks</label>
+                                                <input required type="number" min="0" value={reviewForm.marks} onChange={e => setReviewForm({ ...reviewForm, marks: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="0 - 100" />
+                                            </div>
+                                            <div className="md:col-span-3">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Optional Feedback</label>
+                                                <input type="text" value={reviewForm.feedback} onChange={e => setReviewForm({ ...reviewForm, feedback: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="Great job..." />
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-end gap-3">
+                                            <button onClick={() => setReviewingId(null)} className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
+                                            <button onClick={() => handleSubmitReview(s.id)} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">Submit Grade</button>
+                                        </div>
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="flex items-end gap-3 mt-4 pt-4 border-t border-gray-50">
                                     <button onClick={() => {
-                                        const marks = prompt("Enter marks:");
-                                        const feedback = prompt("Enter feedback:");
-                                        if (marks !== null) reviewSubmission(s.id, Number(marks), feedback || "");
+                                        setReviewingId(s.id);
+                                        setReviewForm({ marks: '', feedback: '' });
                                     }} className="flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium text-sm rounded-xl transition-colors">
                                         <Edit3 className="w-4 h-4 mr-2" />
                                         Review Now

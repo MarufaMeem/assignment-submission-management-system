@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { fetchApi } from '@/lib/api';
-import { GraduationCap, Link as LinkIcon, Plus } from 'lucide-react';
+import { GraduationCap, Link as LinkIcon, Plus, X } from 'lucide-react';
 
 interface TeacherAssignmentDto {
     id: number;
@@ -18,37 +18,62 @@ export default function TeacherAssignmentsPage() {
     const [assignments, setAssignments] = useState<TeacherAssignmentDto[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [form, setForm] = useState({ teacherId: '', classId: '', subjectId: '' });
+
     useEffect(() => {
-        const loadAssignments = async () => {
-            try {
-                // Using the specific endpoint for fetching all teacher assignments
-                const data = await fetchApi('/teacher-assignments');
-                setAssignments(data);
-            } catch (err: any) {
-                console.error("Failed to fetch teacher assignments", err);
-            } finally {
-                setLoading(false);
-            }
-        };
         loadAssignments();
     }, []);
 
-    if (loading) {
-        return (
-            <div className="p-12 flex justify-center">
-                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-        );
+    const loadAssignments = async () => {
+        try {
+            setLoading(true);
+            const data = await fetchApi('/teacher-assignments');
+            setAssignments(data);
+        } catch (err: any) {
+            console.error("Failed to fetch teacher assignments", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await fetchApi('/teacher-assignments', {
+                method: 'POST',
+                body: JSON.stringify({
+                    teacherId: parseInt(form.teacherId),
+                    classId: parseInt(form.classId),
+                    subjectId: parseInt(form.subjectId)
+                })
+            });
+            setIsCreateOpen(false);
+            setForm({ teacherId: '', classId: '', subjectId: '' });
+            loadAssignments();
+        } catch (err: any) { alert(err.message); }
+    };
+
+    const handleRemove = async (id: number) => {
+        if (!confirm("Are you sure you want to remove this mapping?")) return;
+        try {
+            await fetchApi(`/teacher-assignments/${id}`, { method: 'DELETE' });
+            loadAssignments();
+        } catch (err: any) { alert(err.message); }
+    };
+
+    if (loading && assignments.length === 0) {
+        return <div className="p-12 flex justify-center"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Teacher Assignments</h1>
                     <p className="mt-1 text-sm text-gray-500">Map teachers to classes and subjects.</p>
                 </div>
-                <button className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition-colors shadow-sm">
+                <button onClick={() => setIsCreateOpen(true)} className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition-colors shadow-sm">
                     <Plus className="w-5 h-5" />
                     <span>Assign Teacher</span>
                 </button>
@@ -73,17 +98,20 @@ export default function TeacherAssignmentsPage() {
                                             <div className="bg-emerald-100 text-emerald-600 p-2 rounded-lg">
                                                 <GraduationCap className="w-4 h-4" />
                                             </div>
-                                            <div className="text-sm font-medium text-gray-900">{assignment.teacherName}</div>
+                                            <div className="space-y-1">
+                                                <div className="text-sm font-bold text-gray-900">{assignment.teacherName}</div>
+                                                <div className="text-xs text-gray-500">ID: {assignment.teacherId}</div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {assignment.className}
+                                        <span className="font-semibold">{assignment.className}</span> <span className="text-gray-400 text-xs ml-1">(ID: {assignment.classId})</span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {assignment.subjectName}
+                                        <span className="font-semibold">{assignment.subjectName}</span> <span className="text-gray-400 text-xs ml-1">(ID: {assignment.subjectId})</span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="text-red-600 hover:text-red-900">
+                                        <button onClick={() => handleRemove(assignment.id)} className="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded-md transition-colors hover:bg-red-100">
                                             Remove
                                         </button>
                                     </td>
@@ -103,6 +131,33 @@ export default function TeacherAssignmentsPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Create Mapping Modal */}
+            {isCreateOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h2 className="text-xl font-bold">Assign Teacher</h2>
+                            <button onClick={() => setIsCreateOpen(false)}><X className="text-gray-400" /></button>
+                        </div>
+                        <form onSubmit={handleCreate} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold mb-1">Teacher User ID</label>
+                                <input required type="number" min="1" value={form.teacherId} onChange={e => setForm({ ...form, teacherId: e.target.value })} className="w-full px-4 py-2 border rounded-xl" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold mb-1">Class ID</label>
+                                <input required type="number" min="1" value={form.classId} onChange={e => setForm({ ...form, classId: e.target.value })} className="w-full px-4 py-2 border rounded-xl" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold mb-1">Subject ID</label>
+                                <input required type="number" min="1" value={form.subjectId} onChange={e => setForm({ ...form, subjectId: e.target.value })} className="w-full px-4 py-2 border rounded-xl" />
+                            </div>
+                            <button type="submit" className="w-full py-2.5 bg-indigo-600 text-white rounded-xl font-medium pt-3">Create Mapping</button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
