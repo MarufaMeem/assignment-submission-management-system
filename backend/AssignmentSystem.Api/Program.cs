@@ -90,10 +90,19 @@ builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IClassService, ClassService>();
+builder.Services.AddScoped<ISubjectService, SubjectService>();
+builder.Services.AddScoped<ITeacherAssignmentService, TeacherAssignmentService>();
+builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
 // ---------- Controllers ----------
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<AssignmentSystem.Api.Filters.ValidationFilter>();
+});
 
 // ---------- CORS ----------
 // Explicit allow-list from configuration, never a wildcard - a wildcard origin

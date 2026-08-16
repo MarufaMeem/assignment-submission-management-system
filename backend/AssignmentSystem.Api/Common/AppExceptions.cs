@@ -41,7 +41,18 @@ public class UnauthorizedAppException : AppException
 /// Distinct from FluentValidation's request-shape validation, which runs earlier.</summary>
 public class ValidationAppException : AppException
 {
+    /// <summary>Optional field-level detail (property name -> messages). Populated
+    /// by ValidationFilter when a FluentValidation check fails; left null when a
+    /// service throws this for a single business-rule violation with no natural
+    /// "field" to attach it to (e.g. "marks cannot exceed maximum marks").</summary>
+    public IDictionary<string, string[]>? Errors { get; }
+
     public ValidationAppException(string message) : base(message) { }
+
+    public ValidationAppException(string message, IDictionary<string, string[]> errors) : base(message)
+    {
+        Errors = errors;
+    }
 }
 
 /// <summary>Request conflicts with current state (e.g. submitting to an unpublished

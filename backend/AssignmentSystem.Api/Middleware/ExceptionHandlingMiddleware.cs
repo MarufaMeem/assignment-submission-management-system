@@ -79,6 +79,7 @@ public class ExceptionHandlingMiddleware
         {
             Error = errorCode,
             Message = clientMessage,
+            Errors = (exception as ValidationAppException)?.Errors,
             TraceId = context.TraceIdentifier
         };
 
