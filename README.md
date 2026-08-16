@@ -10,7 +10,7 @@
 >
 > 🎥 **Project Demo Video:** 
 > 
-> [🎬 Click here to watch the full Project Demo Video](./assignment_submission_project.mp4)
+> [![EduTrack Demo](https://img.youtube.com/vi/4l-SB3KOdaw/0.jpg)](https://youtu.be/4l-SB3KOdaw)
 
 ---
 
