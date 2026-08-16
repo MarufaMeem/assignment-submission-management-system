@@ -10,7 +10,7 @@
 >
 > 🎥 **Project Demo Video:** 
 > 
-> <video src="./assignment_submission_project.mp4" controls="controls" width="100%">Your browser does not support the video tag.</video>
+> [🎬 Click here to watch the full Project Demo Video](./assignment_submission_project.mp4)
 
 ---
 
