@@ -2,7 +2,6 @@ using AssignmentSystem.Api.Common;
 using AssignmentSystem.Api.DTOs.Assignments;
 using AssignmentSystem.Api.DTOs.Submissions;
 using AssignmentSystem.Api.Entities;
-using AssignmentSystem.Api.Exceptions;
 using AssignmentSystem.Api.Services.Implementations;
 using AssignmentSystem.Tests.TestHelpers;
 using Xunit;
