@@ -14,7 +14,7 @@
 
 ---
 
-## � Alignment with Job Requirements
+##  Alignment with Job Requirements
 
 I engineered EduTrack to serve as a comprehensive proof-of-concept for the skills required in your product engineering team:
 
@@ -27,7 +27,7 @@ I engineered EduTrack to serve as a comprehensive proof-of-concept for the skill
 
 ---
 
-## 🛠️ Technology Stack Implemented
+##  Technology Stack Implemented
 
 ### **Backend (Modular API)**
 *   **Framework:** C# / ASP.NET Core 8 Web API
@@ -44,7 +44,7 @@ I engineered EduTrack to serve as a comprehensive proof-of-concept for the skill
 
 ---
 
-## 🚀 Key Features
+##  Key Features
 
 *   **SaaS Administration:** Secure endpoint provisioning mimicking enterprise SaaS modules to register classes, subjects, and allocate teacher-to-curriculum mappings.
 *   **Teacher Dashboards:** Comprehensive tooling for educators to draft, publish, and evaluate student assignments with fluid UI feedback.
@@ -53,7 +53,7 @@ I engineered EduTrack to serve as a comprehensive proof-of-concept for the skill
 
 ---
 
-## 💻 Running the Project Locally
+##  Running the Project Locally
 
 To run this stack, ensure the **.NET 8 SDK** and **Node.js** are installed.
 
@@ -72,7 +72,7 @@ npm install
 npm run dev
 ```
 
-### 🏷️ Seeded Test Accounts
+###  Seeded Test Accounts
 Use these to explore the complex authorization matrices implemented across the backend:
 - **Admin Access:** `admin@school.edu` / `Admin@123`
 - **Teacher Access:** `alice.teacher@school.edu` / `Teacher@123`
@@ -80,7 +80,7 @@ Use these to explore the complex authorization matrices implemented across the b
 
 ---
 
-## 💡 Why Me?
+##  Why Me?
 Building EduTrack has fortified my understanding of exactly how scalable modular APIs integrate securely with modern frontend features. I have a proactive, ownership-driven attitude, strong problem-solving skills, and an immense willingness to rapidly learn your SaaS modules and start delivering value.
 
 I look forward to discussing how my analytical skills and this project align with your team's goals at the technical interview.
