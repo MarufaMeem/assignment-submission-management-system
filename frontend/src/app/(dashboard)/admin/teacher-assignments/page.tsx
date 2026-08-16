@@ -22,7 +22,7 @@ export default function TeacherAssignmentsPage() {
         const loadAssignments = async () => {
             try {
                 // Using the specific endpoint for fetching all teacher assignments
-                const data = await fetchApi('/teacherAssignments');
+                const data = await fetchApi('/teacher-assignments');
                 setAssignments(data);
             } catch (err: any) {
                 console.error("Failed to fetch teacher assignments", err);

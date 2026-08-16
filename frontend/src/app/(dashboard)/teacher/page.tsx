@@ -1,23 +1,67 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { FileText, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { fetchApi } from '@/lib/api';
 
 export default function TeacherDashboard() {
     const { user } = useAuth();
+    const [statsData, setStatsData] = useState({ active: 0, pendingReview: 0, reviewed: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const assignmentsData = await fetchApi('/assignments').catch(() => []);
+                let active = 0;
+                let pending = 0;
+                let reviewed = 0;
+
+                for (const a of assignmentsData) {
+                    if (a.status === 'Published') active++;
+                }
+
+                // Fetch submissions
+                const results = await Promise.allSettled(
+                    assignmentsData.map((a: any) => fetchApi(`/assignments/${a.id}/submissions`).catch(() => []))
+                );
+
+                results.forEach(res => {
+                    if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+                        res.value.forEach((sub: any) => {
+                            if (sub.status === 'Reviewed') reviewed++;
+                            else if (sub.status === 'Submitted' || sub.status === 'Late') pending++;
+                        });
+                    }
+                });
+
+                setStatsData({ active, pendingReview: pending, reviewed });
+            } catch (err) {
+                console.error("Failed to load dashboard stats", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadStats();
+    }, []);
 
     const stats = [
-        { title: "Active Assignments", value: 12, icon: FileText, color: "text-blue-600", bg: "bg-blue-100" },
-        { title: "Submissions to Review", value: 45, icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
-        { title: "Reviewed Submissions", value: 128, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-100" },
+        { title: "Active Assignments", value: statsData.active, icon: FileText, color: "text-blue-600", bg: "bg-blue-100" },
+        { title: "Submissions to Review", value: statsData.pendingReview, icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
+        { title: "Reviewed Submissions", value: statsData.reviewed, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-100" },
     ];
+
+    if (loading) {
+        return <div className="p-12 flex justify-center"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Welcome, {user?.email.split('@')[0]}!</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Welcome, {user?.email?.split('@')[0]}!</h1>
                 <p className="mt-1 text-sm text-gray-500">Manage your assignments and evaluate student submissions.</p>
             </div>
 

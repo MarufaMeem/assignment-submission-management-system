@@ -1,17 +1,58 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { FileSignature, Star, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { fetchApi } from '@/lib/api';
 
 export default function StudentDashboard() {
     const { user } = useAuth();
+    const [stats, setStats] = useState({ pending: 0, submitted: 0, graded: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const assignmentsData = await fetchApi('/students/assignments').catch(() => []);
+                let pending = 0;
+                let submitted = 0;
+                let graded = 0;
+
+                const results = await Promise.allSettled(
+                    assignmentsData.map((a: any) => fetchApi(`/students/assignments/${a.id}/submissions/my`).catch(() => null))
+                );
+
+                results.forEach((res, index) => {
+                    if (res.status === 'fulfilled' && res.value) {
+                        const sub = res.value;
+                        if (sub.status === 'Reviewed') graded++;
+                        else submitted++;
+                    } else {
+                        // either not yet submitted, or threw 404 (Not Found)
+                        pending++;
+                    }
+                });
+
+                setStats({ pending, submitted, graded });
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadStats();
+    }, []);
+
+    if (loading) {
+        return <div className="p-12 flex justify-center"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Welcome, Student!</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Welcome, {user?.email?.split('@')[0]}!</h1>
                 <p className="mt-1 text-sm text-gray-500">View your active assignments and check your grades.</p>
             </div>
 
@@ -22,7 +63,7 @@ export default function StudentDashboard() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Pending</p>
-                        <p className="text-3xl font-bold text-gray-900">4</p>
+                        <p className="text-3xl font-bold text-gray-900">{stats.pending}</p>
                     </div>
                 </div>
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center space-x-4">
@@ -31,7 +72,7 @@ export default function StudentDashboard() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Submitted</p>
-                        <p className="text-3xl font-bold text-gray-900">12</p>
+                        <p className="text-3xl font-bold text-gray-900">{stats.submitted}</p>
                     </div>
                 </div>
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center space-x-4">
@@ -40,7 +81,7 @@ export default function StudentDashboard() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Grades Received</p>
-                        <p className="text-3xl font-bold text-gray-900">9</p>
+                        <p className="text-3xl font-bold text-gray-900">{stats.graded}</p>
                     </div>
                 </div>
             </div>

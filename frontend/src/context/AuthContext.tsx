@@ -32,7 +32,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                const decoded = jwtDecode<DecodedToken>(token);
+                const decodedRaw = jwtDecode<any>(token);
+                const decoded: DecodedToken = {
+                    ...decodedRaw,
+                    email: decodedRaw.email || decodedRaw['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || 'user@example.com',
+                    role: decodedRaw.role || decodedRaw['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+                };
                 if (decoded.exp * 1000 > Date.now()) {
                     setUser(decoded);
                 } else {
@@ -71,7 +76,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = (token: string) => {
         localStorage.setItem('token', token);
-        const decoded = jwtDecode<DecodedToken>(token);
+        const decodedRaw = jwtDecode<any>(token);
+        const decoded: DecodedToken = {
+            ...decodedRaw,
+            email: decodedRaw.email || decodedRaw['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || 'user@example.com',
+            role: decodedRaw.role || decodedRaw['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+        };
         setUser(decoded);
 
         switch (decoded.role) {
